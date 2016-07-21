@@ -1,12 +1,12 @@
 package main
 /*
+By: Zoe Toth
+
 todo
 	-port is fixed, should be parameter?
-	-ingredients as struct
-		-more calls to updates ingredients
-	-the declaration of Recipe should be in it's own file. 
 
 	improvements
+		-
 		-catagories, breakfast, etc.
 			implemented as in relational DB
 			breakfast would be a table with pointers to related recipes, ie. pointer to fried egg, poached egg, etc. 
@@ -20,19 +20,6 @@ import (
     "encoding/json"
     "strconv"
 )
-
-type Ingredient struct {
-	Quantity 	float32  `json:"quantity`
-	Unit		string `json:"unit"`
-    Name 		string `json:"name"`
-}
-
-type Recipe struct {
-	ID 				int `json:"id`
-    Name 			string `json:"name"`
-    Ingredients 	[]Ingredient
-    Instructions 	string `json:"instructions"`
-}
 
 
 var recipeDB []Recipe
@@ -208,7 +195,7 @@ func alterRecipe(w http.ResponseWriter, r *http.Request) {
     		//appends the list of all recipes with id's <i, to the list of all recipes with id's >i
 			recipeDB[i] = alteredRecipe
 			json.NewEncoder(w).Encode(recipeDB[i])
-			fmt.Println("Successfully altered recipe with id == %d", i)
+			fmt.Println("Successfully altered recipe with id == %d", ID)
     	}
     } else {
     	fmt.Println("Invalid ID! alteration request denied!")

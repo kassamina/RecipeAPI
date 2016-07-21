@@ -10,18 +10,7 @@ import (
     "strconv"
     "net/url"
 )
-type Ingredient struct {
-    Quantity    float32  `json:"quantity`
-    Unit        string `json:"unit"`
-    Name        string `json:"name"`
-}
 
-type Recipe struct {
-    ID              int `json:"id`
-    Name            string `json:"name"`
-    Ingredients     []Ingredient
-    Instructions    string `json:"instructions"`
-}
 
 func testAddRecipe() {
     newRecipe := Recipe{ID: 0, Name: "Boiled Egg", Ingredients: []Ingredient{{1.0,"", "egg"}}, Instructions: "Boil the egg(s)."}
