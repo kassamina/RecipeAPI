@@ -1,19 +1,12 @@
+//By: Zoe Toth
 package main
 /*
-By: Zoe Toth
-
 todo
 	-port is fixed, should be parameter?
+	-let catagories be created / deleted via the web interface
 
-	improvements
-		-
-		-catagories, breakfast, etc.
-			implemented as in relational DB
-			breakfast would be a table with pointers to related recipes, ie. pointer to fried egg, poached egg, etc. 
-			
-			catagories are currently not fully error checked,
-			and I suspect you could run into problems with a recipe beloning to multiple catagories being deleted. 
-			
+Recipes Stored in a global slice, volatile
+They also now include a category, which is also listable. 
 */
 import (
     "fmt"
@@ -33,8 +26,6 @@ func homePage(w http.ResponseWriter, r *http.Request){
     fmt.Fprintf(w, "Hello World!")
     fmt.Println("homepage hit?")
 }
-
-
 
 
 /*
@@ -58,7 +49,6 @@ func binarySearch(low int, high int, target int) int {
     }
     return binarySearch(low, high, target)
 }//binarySearch
-
 
 
 
@@ -126,15 +116,13 @@ func delRecipe(w http.ResponseWriter, r *http.Request){
 				for l :=0; l < len(catagories[k].Recipes); l++ {
 					if catagories[k].Recipes[l].ID == recipeDB[i].ID {
 						//found the reference to our recipe in this catagory, now remove the pointer
-						//deleting this pointer is also deleting what it points do?
 						catagories[k].Recipes = append(catagories[k].Recipes[:l], catagories[k].Recipes[l+1:]...)
 					}
 				}
 			}
 
-
     		//appends the list of all recipes with id's <i, to the list of all recipes with id's >i
-			//recipeDB = append(recipeDB[:i], recipeDB[i+1:]...)
+			recipeDB = append(recipeDB[:i], recipeDB[i+1:]...)
 			fmt.Fprintf(w, "%d", i)
 			fmt.Println("Successfully deleted recipe with id == %d", i)
     	}
@@ -148,7 +136,6 @@ func delRecipe(w http.ResponseWriter, r *http.Request){
 
 
 
-
 /*	returnAllRecipes
 	Input:	Any request sent to http://localhost:8081/all
 
@@ -159,7 +146,6 @@ func returnAllRecipes(w http.ResponseWriter, r *http.Request){
     fmt.Println("Recieved request to return all recipes")
     json.NewEncoder(w).Encode(recipeDB)
 }//returnAllRecipes
-
 
 
 
@@ -183,15 +169,17 @@ func addRecipe(w http.ResponseWriter, r *http.Request){
 	recipeDB = append(recipeDB, newRecipe)
 
 	//loop through this recipes catagories, appending a point to this recipe for each catagory
-	for i := 0; i < len(recipeDB[nextID].CatagoryIDs); i++ {
-		j := recipeDB[nextID].CatagoryIDs[i] 
-		catagories[j].Recipes = append(catagories[j].Recipes, &recipeDB[nextID])
+	index := len(recipeDB)-1
+	for i := 0; i < len(recipeDB[index].CatagoryIDs); i++ {
+		j := recipeDB[index].CatagoryIDs[i] 
+		catagories[j].Recipes = append(catagories[j].Recipes, &recipeDB[index])
 	}
 
 	//send back the recipe's new ID as confirmation of success
 	fmt.Fprintf(w, "%d",nextID)
 	nextID++
 }//addRecipe
+
 
 
 /*	alterRecipe
@@ -230,6 +218,7 @@ func alterRecipe(w http.ResponseWriter, r *http.Request) {
     	fmt.Fprintf(w,"Invalid ID! alteration request denied!")
     }
 }//alterRecipe
+
 
 
 //creates catagory with name newName, returns the Catagory's ID

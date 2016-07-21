@@ -1,3 +1,4 @@
+//By: Zoe Toth
 package main
 
 import (
@@ -10,7 +11,10 @@ import (
     "strconv"
     "net/url"
 )
-
+/*
+    Testing is not in proper format, and ideally should be automated, but I will admit that I am not farmilar with go
+    prefering to test as I went, and focus on how go itself worked. 
+*/
 
 func testAddRecipe() {
     newRecipe := Recipe{ID: 0, Name: "Boiled Egg", CatagoryIDs: []int{0}, Ingredients: []Ingredient{{1.0,"", "egg"}}, Instructions: "Boil the egg(s)."}
@@ -75,7 +79,7 @@ func main() {
     testReturnRecipe(8)
     testDeleteRecipe(8)
     testReturnRecipe(8)
-
+    
     //re-deletion?
     //testDeleteRecipe(8)
     
@@ -83,10 +87,11 @@ func main() {
     testReturnRecipe(20)
 
     //should return 22
-    testAddRecipe()
+    //testAddRecipe()
 
-    testAlterRecipe(22)
+    testAlterRecipe(21)
 
     testReturnCat(0)
-    
+
+
 }

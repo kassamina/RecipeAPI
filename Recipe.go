@@ -1,4 +1,6 @@
+//By: Zoe Toth
 package main
+
 type Catagory struct {
 	ID 			int `json:"id`
 	Name 		string `json:"name"`
