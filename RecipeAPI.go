@@ -6,7 +6,7 @@ todo
 	-ingredients as struct
 	-more calls to updates ingredients
 	-more testing
-	-
+	-the declaration of Recipe should be in it's own file. 
 */
 import (
     "fmt"
@@ -63,8 +63,7 @@ func binarySearch(low int, high int, target int) int {
 	Return:	json encoded Recipe
 	
 	Error:	
-	should likely be implemented as a GET
-*/
+			should likely be implemented as a GET */
 func returnRecipe(w http.ResponseWriter, r *http.Request) {
 	ID,err := strconv.Atoi(r.FormValue("ID"))
 	if err != nil {
@@ -89,17 +88,30 @@ func returnRecipe(w http.ResponseWriter, r *http.Request) {
 }//returnRecipe
 
 
+/*	returnAllRecipes
+	Input:	Any request sent to http://localhost:8081/all
+
+	Return: All recipes that are currently being stored, in order of their ID, in json
+
+	Error: N/A */
 func returnAllRecipes(w http.ResponseWriter, r *http.Request){  
     fmt.Println("Recieved request to return all recipes")
     json.NewEncoder(w).Encode(recipeDB)
 }//returnAllRecipes
 
-//expects http post - body being a valid Json formatted Recipe struct
+
+/*	addRecipe
+	Input: json formated Recipe in body of request sent to http://localhost:8081/add
+
+	Return:	The recipes new ID 
+
+	Error: Throws error if the recipe cannot be decoded*/
 func addRecipe(w http.ResponseWriter, r *http.Request){
 	decoder := json.NewDecoder(r.Body)
 	var newRecipe Recipe
 	err := decoder.Decode(&newRecipe)
 	if err != nil {
+		fmt.Fprintf(w, "Error: Inproperly formated Recipe")
 		panic(err)
 	}
 
@@ -110,6 +122,13 @@ func addRecipe(w http.ResponseWriter, r *http.Request){
 	nextID++
 }//addRecipe
 
+
+/*	delRecipe
+	Input: http post body parameter, named "ID" containing the recipeID you wish to delete
+
+	Return:	Sends back the deleted recipe's ID on success
+
+	Error: 	Returns error message in body of response*/
 func delRecipe(w http.ResponseWriter, r *http.Request){
 	ID,err := strconv.Atoi(r.FormValue("ID"))
 	if err != nil {
@@ -127,7 +146,7 @@ func delRecipe(w http.ResponseWriter, r *http.Request){
     	} else {
     		//appends the list of all recipes with id's <i, to the list of all recipes with id's >i
 			recipeDB = append(recipeDB[:i], recipeDB[i+1:]...)
-			fmt.Fprintf(w, "RecipeID: %d, was successfully deleted.", i)
+			fmt.Fprintf(w, "%d", i)
     	}
     } else {
     	fmt.Println("Invalid ID! deletion request denied!")
@@ -155,7 +174,6 @@ func main() {
 	nextID = 2
 
 	//fmt.Println(recipeDB[0])
-	
     handleRequests()
 }//main
 
