@@ -13,7 +13,7 @@ import (
 
 
 func testAddRecipe() {
-    newRecipe := Recipe{ID: 0, Name: "Boiled Egg", Ingredients: []Ingredient{{1.0,"", "egg"}}, Instructions: "Boil the egg(s)."}
+    newRecipe := Recipe{ID: 0, Name: "Boiled Egg", CatagoryIDs: []int{0}, Ingredients: []Ingredient{{1.0,"", "egg"}}, Instructions: "Boil the egg(s)."}
    
     b := new(bytes.Buffer)
     json.NewEncoder(b).Encode(newRecipe)
@@ -60,6 +60,13 @@ func testAlterRecipe(id int) {
     io.Copy(os.Stdout, res.Body)
 }
 
+func testReturnCat(id int) {
+    data := url.Values{}
+    data.Set("ID", strconv.Itoa(id))
+
+    r, _ := http.Post("http://localhost:8081/cat", "application/x-www-form-urlencoded; charset=utf-8", bytes.NewBufferString(data.Encode())) 
+    io.Copy(os.Stdout, r.Body)
+}
 func main() {
     for i := 0; i < 20; i++ {
         testAddRecipe()
@@ -70,7 +77,7 @@ func main() {
     testReturnRecipe(8)
 
     //re-deletion?
-    testDeleteRecipe(8)
+    //testDeleteRecipe(8)
     
     //the delete will have shifted the indices in the "DB", check to see if return still works
     testReturnRecipe(20)
@@ -79,5 +86,7 @@ func main() {
     testAddRecipe()
 
     testAlterRecipe(22)
+
+    testReturnCat(0)
     
 }

@@ -10,8 +10,10 @@ todo
 		-catagories, breakfast, etc.
 			implemented as in relational DB
 			breakfast would be a table with pointers to related recipes, ie. pointer to fried egg, poached egg, etc. 
-
-
+			
+			catagories are currently not fully error checked,
+			and I suspect you could run into problems with a recipe beloning to multiple catagories being deleted. 
+			
 */
 import (
     "fmt"
@@ -24,6 +26,8 @@ import (
 
 var recipeDB []Recipe
 var nextID int
+var catagories []Catagory
+var nextCatID int
 
 func homePage(w http.ResponseWriter, r *http.Request){
     fmt.Fprintf(w, "Hello World!")
@@ -113,8 +117,24 @@ func delRecipe(w http.ResponseWriter, r *http.Request){
     		fmt.Println("I'm sorry, that's no longer a valid recipeID.")
     		fmt.Fprintf(w,"I'm sorry, that's no longer a valid recipeID.")
     	} else {
+    		//found the recipe, we can now go about deleting it
+
+    		//loop through this recipes catagories, deleting a point to this recipe for each of it's catagories
+			for j := 0; j < len(recipeDB[j].CatagoryIDs); j++ {
+				k := recipeDB[i].CatagoryIDs[j] 
+				//checking in catagory k
+				for l :=0; l < len(catagories[k].Recipes); l++ {
+					if catagories[k].Recipes[l].ID == recipeDB[i].ID {
+						//found the reference to our recipe in this catagory, now remove the pointer
+						//deleting this pointer is also deleting what it points do?
+						catagories[k].Recipes = append(catagories[k].Recipes[:l], catagories[k].Recipes[l+1:]...)
+					}
+				}
+			}
+
+
     		//appends the list of all recipes with id's <i, to the list of all recipes with id's >i
-			recipeDB = append(recipeDB[:i], recipeDB[i+1:]...)
+			//recipeDB = append(recipeDB[:i], recipeDB[i+1:]...)
 			fmt.Fprintf(w, "%d", i)
 			fmt.Println("Successfully deleted recipe with id == %d", i)
     	}
@@ -148,7 +168,8 @@ func returnAllRecipes(w http.ResponseWriter, r *http.Request){
 
 	Return:	The recipes new ID 
 
-	Error: Throws error if the recipe cannot be decoded*/
+	Error: 	Throws error if the recipe cannot be decoded
+			Currently does not check if catagory is valid*/
 func addRecipe(w http.ResponseWriter, r *http.Request){
 	decoder := json.NewDecoder(r.Body)
 	var newRecipe Recipe
@@ -160,6 +181,13 @@ func addRecipe(w http.ResponseWriter, r *http.Request){
 
 	newRecipe.ID = nextID
 	recipeDB = append(recipeDB, newRecipe)
+
+	//loop through this recipes catagories, appending a point to this recipe for each catagory
+	for i := 0; i < len(recipeDB[nextID].CatagoryIDs); i++ {
+		j := recipeDB[nextID].CatagoryIDs[i] 
+		catagories[j].Recipes = append(catagories[j].Recipes, &recipeDB[nextID])
+	}
+
 	//send back the recipe's new ID as confirmation of success
 	fmt.Fprintf(w, "%d",nextID)
 	nextID++
@@ -204,21 +232,70 @@ func alterRecipe(w http.ResponseWriter, r *http.Request) {
 }//alterRecipe
 
 
+//creates catagory with name newName, returns the Catagory's ID
+func createCatagory(newName string) int {
+	newCatagory := Catagory{ID: nextCatID, Name: newName, Recipes: make([]*Recipe, 0)}
+	catagories = append(catagories, newCatagory)
+
+	nextCatID++
+
+	return nextCatID-1
+}
+
+/*	returnAllCat
+	Input:	Any request sent to http://localhost:8081/all
+
+	Return: All recipes that are currently being stored, in order of their ID, in json
+
+	Error: N/A */
+func returnAllCat(w http.ResponseWriter, r *http.Request){  
+    fmt.Println("Recieved request to return all catagories")
+    json.NewEncoder(w).Encode(catagories)
+}//returnAllCat
+
+
+
+/*	returnCat
+	Input: 	Expects a http post body parameter, named "ID" containing the CatagoryID you wish to be returned.
+			request should be sent to http://localhost:8081/cat
+			
+	Return:	json encoded Recipe
+	
+	Error:	Returns error message in body of response
+			should likely be implemented as a GET, with a url parameter */
+func returnCat(w http.ResponseWriter, r *http.Request) {
+	ID,err := strconv.Atoi(r.FormValue("ID"))
+	if err != nil {
+		panic(err)
+	}
+
+    fmt.Println("recieved request to return CatagoryID: %d", ID)
+
+    json.NewEncoder(w).Encode(catagories[ID])
+    
+}//returnCat
+
 func handleRequests() {
     http.HandleFunc("/", homePage)
     http.HandleFunc("/all", returnAllRecipes)
+    http.HandleFunc("/allcat", returnAllCat)
     http.HandleFunc("/return", returnRecipe)
     http.HandleFunc("/delete", delRecipe)
     http.HandleFunc("/add", addRecipe)
     http.HandleFunc("/alter", alterRecipe)
+	http.HandleFunc("/cat", returnCat)
     log.Fatal(http.ListenAndServe(":8081", nil))
 }//handRequests
 
 func main() {
+	nextCatID = 0
+	catagories = make([]Catagory, 0)
+	createCatagory("Breakfast")
+
 	//create the slice which will store all of the recipes; 
 	recipeDB = make([]Recipe, 0)
-	recipeDB = append(recipeDB, Recipe{ID: 0, Name: "Fried Egg", Ingredients: []Ingredient{{1.0,"", "egg"}, {2.0,"teaspoons", "butter"}}, Instructions: "Fry the egg(s) in the butter."})
-	recipeDB = append(recipeDB, Recipe{ID: 1, Name: "Poached Egg", Ingredients: []Ingredient{{1.0,"", "egg"}}, Instructions: "Poach the egg(s)."})
+	recipeDB = append(recipeDB, Recipe{ID: 0, Name: "Fried Egg", CatagoryIDs: []int{0}, Ingredients: []Ingredient{{1.0,"", "egg"}, {2.0,"teaspoons", "butter"}}, Instructions: "Fry the egg(s) in the butter."})
+	recipeDB = append(recipeDB, Recipe{ID: 1, Name: "Poached Egg", CatagoryIDs: []int{0}, Ingredients: []Ingredient{{1.0,"", "egg"}}, Instructions: "Poach the egg(s)."})
 	nextID = 2
 
 	//fmt.Println(recipeDB[0])
